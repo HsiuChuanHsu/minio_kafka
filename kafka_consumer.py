@@ -1,7 +1,7 @@
 from confluent_kafka import Consumer, KafkaError
 import json
 from typing import Dict, Any
-import time 
+from datetime import datetime
 
 def setup_kafka_consumer() -> Consumer:
     conf = {
@@ -20,25 +20,36 @@ def extract_minio_info(event_data: dict) -> dict:
         event_data (dict): MinIO 事件數據
         
     Returns:
-        dict: 包含 bucket_path, api_name, api_id 的字典
+        dict: 包含事件資訊的字典
     """
     try:
-        # 初始化返回字典
         result = {
             'bucket_path': '',
             'api_name': '',
-            'api_id': ''
+            'api_id': '',
+            'event_name': '',
+            'event_time': None
         }
         
         if 'Records' in event_data and event_data['Records']:
             record = event_data['Records'][0]
             
-            # 獲取 bucket_path (bucket_name/object_key)
+            # 基本資訊
             bucket_name = record['s3']['bucket']['name']
             object_key = record['s3']['object']['key']
             result['bucket_path'] = f"{bucket_name}/{object_key}"
             
-            # 從 userMetadata 中獲取 API 資訊
+            # 事件資訊
+            result['event_name'] = record.get('eventName', '')
+            
+            # 轉換時間格式
+            event_time = record.get('eventTime', '')
+            if event_time:
+                # 將 ISO 格式轉換為 PostgreSQL timestamp 格式
+                dt = datetime.strptime(event_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+                result['event_time'] = dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+            
+            # Metadata 資訊
             if 'userMetadata' in record['s3']['object']:
                 metadata = record['s3']['object']['userMetadata']
                 result['api_name'] = metadata.get('X-Amz-Meta-Api', '')

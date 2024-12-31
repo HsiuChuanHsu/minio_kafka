@@ -28,6 +28,7 @@ kafka-python==2.0.2
 confluent-kafka==2.3.0
 ```
 
+
 ## 專案架構
 ```
 .
@@ -37,6 +38,7 @@ confluent-kafka==2.3.0
 ├── kafka_consumer.py      # Kafka 消費者程式
 └── README.md              # 專案說明文件
 ```
+
 
 ## 快速開始
 
@@ -202,6 +204,9 @@ def listen_kafka_events():
   ]
 }
 ```
+userMetadata 可以做邊變更＆在頁面上也會顯示相關資訊
+![alt text](images/Bucket-Event-userMetadata.png "Bucket-Event-ARN")
+
 
 ## 監控和注意事項
 

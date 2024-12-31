@@ -36,14 +36,7 @@ def upload_file_with_metadata():
     # 上傳檔案
     client.put_object(
         bucket_name,
-        "test-file_apiid.txt",
-        data=data_stream,  # 使用 BytesIO 物件
-        length=len(test_data),
-        metadata=custom_metadata
-    )
-    client.put_object(
-        'test-bucket2',
-        "test-file_apiid.txt",
+        "test-file_apiid2.txt",
         data=data_stream,  # 使用 BytesIO 物件
         length=len(test_data),
         metadata=custom_metadata
