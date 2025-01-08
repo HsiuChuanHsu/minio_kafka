@@ -24,7 +24,6 @@
 ### 相依套件
 ```
 minio==7.2.0
-kafka-python==2.0.2
 confluent-kafka==2.3.0
 ```
 
@@ -206,6 +205,48 @@ def listen_kafka_events():
 ```
 userMetadata 可以做邊變更＆在頁面上也會顯示相關資訊
 ![alt text](images/Bucket-Event-userMetadata.png "Bucket-Event-ARN")
+
+
+## Metadata 更新機制
+
+MinIO 中更新物件 metadata 需要使用特殊的機制，因為 S3 協議不支援直接修改現有物件的 metadata。以下說明更新 metadata 的實作方式：
+
+### 使用 copy_object 更新 Metadata
+
+1. **更新流程**
+   - 使用 `copy_object` 方法對同一物件進行複製
+   - 在複製過程中指定新的 metadata
+   - 此操作會觸發兩個事件：Put 和 Copy
+
+2. **程式碼範例**
+```python
+def update_object_metadata(client, bucket_name, object_name, metadata):
+    try:
+        copy_source = CopySource(bucket_name, object_name)
+        result = client.copy_object(
+            bucket_name,
+            object_name,
+            copy_source,
+            metadata=metadata,
+            metadata_directive=REPLACE
+        )
+        return True
+    except Exception as e:
+        print(f"更新 metadata 錯誤: {e}")
+        return False
+```
+
+3. **事件觸發順序**
+   - 首次上傳：觸發 `s3:ObjectCreated:Put` 事件
+   - 更新 metadata：依序觸發
+     1. `s3:ObjectCreated:Put` 事件（不含新 metadata）
+     2. `s3:ObjectCreated:Copy` 事件（包含新 metadata）
+
+4. **注意事項**
+   - Metadata 的值必須是字串類型
+   - 更新操作會產生兩個事件通知
+   - 建議在應用程式中處理時關注 `s3:ObjectCreated:Copy` 事件
+   - 確保 metadata 的鍵值符合 MinIO 的命名規範
 
 
 ## 監控和注意事項
